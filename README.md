@@ -6,7 +6,7 @@ Inside the `Zero-Trust-Enforcement-Engine` repo, paste this into your `README.md
 ```markdown
 #  Continuous Zero-Trust Authentication & Perimeter Enforcement Engine
 
-## 🎯 Architectural Overview
+## 🎯Architectural Overview
 A responsive full-stack security orchestration engine that implements true **Continuous Authentication** at the perimeter. Instead of relying on static one-time logins, this system re-evaluates risk parameters on *every single transaction* using multi-factor contextual telemetry, executing automated micro-segmentation and edge firewall isolation drops when anomalies cross critical thresholds.
 
 
