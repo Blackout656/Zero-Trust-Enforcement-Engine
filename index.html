@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero-Trust Identity & Access Governance Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; }
+        .card { background-color: #161b22; border: 1px solid #30363d; }
+    </style>
+</head>
+<body class="p-8 font-sans">
+
+    <div class="max-w-6xl mx-auto mb-6">
+        <h1 class="text-3xl font-bold text-[#58a6ff] border-b border-[#21262d] pb-3">🛡️ Zero-Trust Access Governance & Enforcement Lab</h1>
+        <p class="text-sm text-gray-400 mt-2">Continuous Multi-Factor Authentication & Contextual Risk Assessment Engine</p>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="card p-6 rounded-lg border-l-4 border-emerald-500">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Engine Security Policy</h3>
+            <div class="text-xl font-bold text-emerald-400 mt-2">ACTIVE / STRICT_MODE</div>
+        </div>
+        <div class="card p-6 rounded-lg border-l-4 border-[#58a6ff]">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Evaluated Packets</h3>
+            <div id="metric-total" class="text-2xl font-bold mt-2">0</div>
+        </div>
+        <div class="card p-6 rounded-lg border-l-4 border-red-500">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Active Edge Firewall Blocks</h3>
+            <div id="metric-blocked" class="text-2xl font-bold text-red-400 mt-2">0</div>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="card p-6 rounded-lg h-fit">
+            <h2 class="text-lg font-bold text-[#58a6ff] mb-4">⚙️ Inject Traffic Packet</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Target Account Username</label>
+                    <input id="input-user" type="text" value="stark_admin" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-sm focus:outline-none focus:border-[#58a6ff]">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Device Hardware MAC Address</label>
+                    <input id="input-mac" type="text" value="00:1A:2B:3C:4D:5E" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-sm focus:outline-none focus:border-[#58a6ff]">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Connection Source Location</label>
+                    <input id="input-loc" type="text" value="Kenya" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-sm focus:outline-none focus:border-[#58a6ff]">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Resource Operation Vector</label>
+                    <select id="input-type" class="w-full bg-[#0d1117] border border-[#30363d] rounded p-2 text-sm focus:outline-none focus:border-[#58a6ff]">
+                        <option value="SSH_AUTH">Standard Authentication (SSH)</option>
+                        <option value="SUDO_EXEC">Administrative Sudo Execution Request</option>
+                        <option value="DB_DESTRUCTION_ATTEMPT">Malicious Drop Database Command Signature</option>
+                    </select>
+                </div>
+                <button onclick="processPacket()" class="w-full bg-[#238636] hover:bg-[#2ea043] text-white text-sm font-bold py-2.5 rounded transition duration-200 mt-2">
+                    Evaluate Packet Matrix
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            <div class="card p-6 rounded-lg">
+                <h2 class="text-md font-bold text-red-400 mb-3">🚫 Active Edge Firewall Blocks (IPTABLES Drops)</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-[#21262d] text-[#58a6ff]">
+                            <tr>
+                                <th class="p-2.5 rounded-l">Mitigation Policy</th>
+                                <th class="p-2.5 rounded-r">Banned MAC Signature</th>
+                            </tr>
+                        </thead>
+                        <tbody id="firewall-table">
+                            <tr>
+                                <td colspan="2" class="p-3 text-center text-gray-500 text-xs">No active hardware drops currently injected at edge perimeter.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card p-6 rounded-lg">
+                <h2 class="text-md font-bold text-[#58a6ff] mb-3">📊 Live Identity Verification Feed</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-[#21262d] text-[#58a6ff]">
+                            <tr>
+                                <th class="p-2.5">Subject</th>
+                                <th class="p-2.5">Location</th>
+                                <th class="p-2.5">Request Type</th>
+                                <th class="p-2.5">Trust Score</th>
+                                <th class="p-2.5 rounded-r">Guard Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feed-table" class="divide-y divide-[#30363d]">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Engine State Memory Database
+        let trustScores = {};
+        let blacklistDevices = new Set();
+        let logsHistory = [];
+        
+        let lastLoc = null;
+        let lastTime = null;
+
+        function processPacket() {
+            const user = document.getElementById('input-user').value.trim();
+            const mac = document.getElementById('input-mac').value.trim();
+            const loc = document.getElementById('input-loc').value.trim();
+            const type = document.getElementById('input-type').value;
+            const currentTime = new Date();
+
+            if (!user || !mac || !loc) {
+                alert("All contextual telemetry fields must be filled!");
+                return;
+            }
+
+            // Initialize or fetch trust score
+            if (!(user in trustScores)) {
+                trustScores[user] = 100.0;
+            }
+
+            let decision = "FULL_ACCESS";
+            let currentScore = trustScores[user];
+
+            // 1. HARDWARE BLACKLIST GUARD CHECK
+            if (blacklistDevices.has(mac)) {
+                trustScores[user] = 0.0;
+                decision = "ACCESS_DENIED";
+            } else {
+                let penalties = 0.0;
+
+                // 2. CONTEXTUAL CHECK: IMPOSSIBLE TRAVEL DETECTOR
+                if (lastLoc && lastTime) {
+                    if (lastLoc !== loc) {
+                        let timeDelta = (currentTime - lastTime) / 1000 / 60; // Minutes
+                        if (timeDelta < 60.0) {
+                            penalties += 45.0;
+                        }
+                    }
+                }
+
+                // 3. CONTEXTUAL CHECK: HOSTILE SIGNATURE
+                if (type === "DB_DESTRUCTION_ATTEMPT") {
+                    penalties += 80.0;
+                } else if (type === "SUDO_EXEC") {
+                    penalties += 10.0;
+                }
+
+                // Recalculate score matrix
+                trustScores[user] = Math.max(0.0, currentScore - penalties);
+                let finalScore = trustScores[user];
+
+                // Boundary Matrix Decision
+                if (finalScore >= 70.0) {
+                    decision = "FULL_ACCESS";
+                } else if (finalScore >= 40.0) {
+                    decision = "RESTRICTED_SANDBOX";
+                } else {
+                    decision = "ACCESS_DENIED";
+                    blacklistDevices.add(mac); // Active Containment Block
+                }
+            }
+
+            // Update State Trackers
+            lastLoc = loc;
+            lastTime = currentTime;
+
+            // Push execution array to log history matrix
+            logsHistory.unshift({
+                user: user,
+                loc: loc,
+                type: type,
+                score: trustScores[user].toFixed(1),
+                decision: decision
+            });
+
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update Metrics
+            document.getElementById('metric-total').innerText = logsHistory.length;
+            document.getElementById('metric-blocked').innerText = blacklistDevices.size;
+
+            // Render Firewall Table
+            const firewallTable = document.getElementById('firewall-table');
+            if (blacklistDevices.size === 0) {
+                firewallTable.innerHTML = `<tr><td colspan="2" class="p-3 text-center text-gray-500 text-xs">No active hardware drops currently injected at edge perimeter.</td></tr>`;
+            } else {
+                firewallTable.innerHTML = "";
+                blacklistDevices.forEach(mac => {
+                    firewallTable.innerHTML += `
+                        <tr class="bg-[#2c1a1d] border-b border-[#30363d]">
+                            <td class="p-2.5 text-xs text-red-400 font-bold">DROP / IPTABLES_BLOCK</td>
+                            <td class="p-2.5 text-xs font-mono">${mac}</td>
+                        </tr>`;
+                });
+            }
+
+            // Render Verification Feed
+            const feedTable = document.getElementById('feed-table');
+            feedTable.innerHTML = "";
+            logsHistory.forEach(item => {
+                let colorClass = "text-emerald-400";
+                if (item.decision === "RESTRICTED_SANDBOX") colorClass = "text-orange-400";
+                if (item.decision === "ACCESS_DENIED") colorClass = "text-red-400";
+
+                feedTable.innerHTML += `
+                    <tr class="hover:bg-[#21262d] transition duration-150">
+                        <td class="p-2.5 font-mono text-xs">${item.user}</td>
+                        <td class="p-2.5 text-xs">${item.loc}</td>
+                        <td class="p-2.5 text-xs font-mono text-gray-400">${item.type}</td>
+                        <td class="p-2.5 text-xs font-bold text-orange-400">${item.score}</td>
+                        <td class="p-2.5 text-xs font-bold ${colorClass}">${item.decision}</td>
+                    </tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
